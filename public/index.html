@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOIT — Modern Task Management</title>
+  <meta name="description" content="A modern, minimal, and fast todo list and task management application designed for daily productivity.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span class="brand-name">DOIT</span>
+        </div>
+        <button id="theme-toggle-btn" class="icon-btn" title="Toggle Theme (Ctrl+D)" aria-label="Toggle Theme">
+          <!-- Light theme icon (sun) -->
+          <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <!-- Dark theme icon (moon) -->
+          <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="nav-filters">
+        <button class="nav-filter-btn active" data-filter="all" id="filter-all">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+          <span>All Tasks</span>
+          <span class="count-badge" id="count-all">0</span>
+        </button>
+        <button class="nav-filter-btn" data-filter="today" id="filter-today">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <span>Today</span>
+          <span class="count-badge" id="count-today">0</span>
+        </button>
+        <button class="nav-filter-btn" data-filter="upcoming" id="filter-upcoming">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          <span>Upcoming</span>
+          <span class="count-badge" id="count-upcoming">0</span>
+        </button>
+        <button class="nav-filter-btn" data-filter="overdue" id="filter-overdue">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <span>Overdue</span>
+          <span class="count-badge danger" id="count-overdue">0</span>
+        </button>
+        <button class="nav-filter-btn" data-filter="completed" id="filter-completed">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          <span>Completed</span>
+          <span class="count-badge" id="count-completed">0</span>
+        </button>
+      </nav>
+
+      <!-- PROJECTS LIST -->
+      <div class="sidebar-section">
+        <div class="section-title">
+          <span>Projects</span>
+          <button id="add-project-btn" class="inline-btn" title="Add Project" aria-label="Add Project">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+        </div>
+        <div class="project-input-container hidden" id="project-input-container">
+          <input type="text" id="project-name-input" placeholder="Project name..." autocomplete="off">
+          <div class="color-picker" id="project-color-picker">
+            <span class="color-dot active" data-color="#3b82f6" style="background-color: #3b82f6;"></span>
+            <span class="color-dot" data-color="#10b981" style="background-color: #10b981;"></span>
+            <span class="color-dot" data-color="#f59e0b" style="background-color: #f59e0b;"></span>
+            <span class="color-dot" data-color="#ef4444" style="background-color: #ef4444;"></span>
+            <span class="color-dot" data-color="#8b5cf6" style="background-color: #8b5cf6;"></span>
+            <span class="color-dot" data-color="#ec4899" style="background-color: #ec4899;"></span>
+          </div>
+          <div class="input-actions">
+            <button id="save-project-btn" class="btn btn-primary btn-xs">Save</button>
+            <button id="cancel-project-btn" class="btn btn-secondary btn-xs">Cancel</button>
+          </div>
+        </div>
+        <ul class="project-list" id="project-list">
+          <!-- Populated by JavaScript -->
+        </ul>
+      </div>
+
+      <!-- TAGS LIST -->
+      <div class="sidebar-section">
+        <div class="section-title">
+          <span>Tags</span>
+        </div>
+        <div class="tag-cloud" id="tag-cloud">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button id="help-btn" class="footer-btn" title="Keyboard Shortcuts (?)">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <span>Shortcuts Guide</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- CENTER PANEL: TASK LIST -->
+    <main class="task-panel" id="task-panel">
+      <header class="task-panel-header">
+        <div class="header-main">
+          <button id="menu-btn" class="icon-btn mobile-only" aria-label="Toggle Navigation Sidebar">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <div>
+            <h1 id="current-list-title">All Tasks</h1>
+            <p class="header-subtitle" id="daily-progress-subtitle">0 of 0 tasks completed</p>
+          </div>
+        </div>
+
+        <div class="progress-wrapper">
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="header-progress-bar" style="width: 0%"></div>
+          </div>
+          <span class="progress-percent" id="header-progress-percent">0%</span>
+        </div>
+
+        <div class="header-actions">
+          <button id="search-trigger-btn" class="icon-btn" title="Search Tasks (Ctrl+K)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- QUICK ADD TASK -->
+      <section class="quick-add-section">
+        <form id="quick-add-form" class="quick-add-form">
+          <div class="input-wrapper">
+            <input type="text" id="task-title-input" placeholder="Add a task... (Press Enter or Ctrl+N to focus)" autocomplete="off">
+          </div>
+          <div class="quick-add-details">
+            <div class="quick-add-meta">
+              <!-- Project selector -->
+              <div class="dropdown-wrapper">
+                <select id="quick-add-project" aria-label="Select Project">
+                  <option value="">Inbox</option>
+                  <!-- Populated by JavaScript -->
+                </select>
+              </div>
+              
+              <!-- Priority selector -->
+              <div class="dropdown-wrapper">
+                <select id="quick-add-priority" aria-label="Select Priority">
+                  <option value="low">Low Priority</option>
+                  <option value="medium" selected>Medium Priority</option>
+                  <option value="high">High Priority</option>
+                </select>
+              </div>
+
+              <!-- Due date -->
+              <div class="date-input-wrapper">
+                <input type="date" id="quick-add-date" aria-label="Select Due Date" title="Set Due Date">
+              </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-sm">Add Task</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- TASK LIST -->
+      <section class="task-list-section">
+        <div id="empty-state" class="empty-state hidden">
+          <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <h3 class="empty-state-title">No tasks found</h3>
+          <p class="empty-state-message">Everything is caught up. Add a new task or modify your filters!</p>
+        </div>
+
+        <ul class="task-list" id="task-list">
+          <!-- Populated by JavaScript -->
+        </ul>
+      </section>
+    </main>
+
+    <!-- RIGHT PANEL: TASK DETAILS -->
+    <aside class="details-panel" id="details-panel">
+      <div class="details-header">
+        <h2>Task Details</h2>
+        <button id="close-details-btn" class="icon-btn" aria-label="Close Details Panel">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="details-content" id="details-content">
+        <!-- If no task selected -->
+        <div class="details-empty-state" id="details-empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="11" y2="17"></line></svg>
+          <p>Select a task to view and edit details</p>
+        </div>
+
+        <!-- Task detail fields (visible when task selected) -->
+        <div class="details-form hidden" id="details-form">
+          
+          <!-- Title (Auto-saving text area) -->
+          <div class="form-group">
+            <textarea id="detail-title" rows="2" placeholder="Task title..." aria-label="Task Title"></textarea>
+          </div>
+
+          <!-- Project -->
+          <div class="form-row">
+            <label for="detail-project">Project</label>
+            <div class="select-wrapper">
+              <select id="detail-project">
+                <!-- Populated by JavaScript -->
+              </select>
+            </div>
+          </div>
+
+          <!-- Priority -->
+          <div class="form-row">
+            <label>Priority</label>
+            <div class="priority-btn-group">
+              <button type="button" class="priority-btn" data-priority="low" id="priority-btn-low">Low</button>
+              <button type="button" class="priority-btn" data-priority="medium" id="priority-btn-medium">Medium</button>
+              <button type="button" class="priority-btn" data-priority="high" id="priority-btn-high">High</button>
+            </div>
+          </div>
+
+          <!-- Due Date & Reminder Time -->
+          <div class="form-row">
+            <label for="detail-due-date">Due Date</label>
+            <input type="date" id="detail-due-date">
+          </div>
+
+          <div class="form-row">
+            <label for="detail-reminder">Reminder Time</label>
+            <input type="time" id="detail-reminder">
+          </div>
+
+          <!-- Recurrence -->
+          <div class="form-row">
+            <label for="detail-recurring">Repeat</label>
+            <div class="select-wrapper">
+              <select id="detail-recurring">
+                <option value="none">None</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <div class="form-group">
+            <label for="detail-tags-input">Tags</label>
+            <div class="detail-tags-container" id="detail-tags-container">
+              <!-- Active tags rendered here -->
+            </div>
+            <input type="text" id="detail-tags-input" placeholder="Type tag and press Enter" autocomplete="off">
+          </div>
+
+          <!-- Description / Notes -->
+          <div class="form-group flex-grow">
+            <label for="detail-description">Description & Notes</label>
+            <textarea id="detail-description" class="notes-textarea" placeholder="Add descriptions, subtasks lists, or remarks... (auto-saves)"></textarea>
+          </div>
+
+          <!-- Footer Actions -->
+          <div class="details-footer">
+            <button id="delete-task-btn" class="btn btn-danger">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+              <span>Delete Task</span>
+            </button>
+            <span class="auto-save-indicator" id="auto-save-indicator">Saved</span>
+          </div>
+
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- SEARCH OVERLAY MODAL -->
+  <div class="modal-backdrop hidden" id="search-modal">
+    <div class="search-modal-container">
+      <div class="search-input-header">
+        <svg class="search-modal-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="global-search-input" placeholder="Search title or description... (Type & press Enter or ESC to exit)" autocomplete="off">
+        <button id="close-search-btn" class="icon-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="search-results" id="search-results-list">
+        <!-- Results populated here -->
+        <div class="search-empty-state">
+          <p>Search tasks, notes, or priorities instantly</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHORTCUTS MODAL -->
+  <div class="modal-backdrop hidden" id="shortcuts-modal">
+    <div class="shortcuts-modal-container">
+      <div class="modal-header">
+        <h2>Keyboard Shortcuts</h2>
+        <button id="close-shortcuts-btn" class="icon-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="shortcuts-list">
+        <div class="shortcut-item">
+          <span class="shortcut-label">Focus Quick Add Task</span>
+          <kbd>Ctrl</kbd> + <kbd>N</kbd>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-label">Open Global Search</span>
+          <kbd>Ctrl</kbd> + <kbd>K</kbd>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-label">Toggle Navigation Sidebar</span>
+          <kbd>Ctrl</kbd> + <kbd>B</kbd>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-label">Toggle Dark / Light Theme</span>
+          <kbd>Ctrl</kbd> + <kbd>D</kbd>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-label">Toggle Completion for Active Task</span>
+          <kbd>Spacebar</kbd> (when details focused)
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-label">Delete Active Task</span>
+          <kbd>Delete</kbd> (when details focused)
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-label">Close Active Modal or Details Panel</span>
+          <kbd>Esc</kbd>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-label">Show / Hide shortcuts list</span>
+          <kbd>?</kbd>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOADS -->
+  <script type="module" src="js/api.js"></script>
+  <script type="module" src="js/theme.js"></script>
+  <script type="module" src="js/shortcuts.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
