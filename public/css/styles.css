@@ -61,10 +61,82 @@ html[data-theme="light"] {
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Premium easing curves — always prefer these over linear/ease */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);   /* springy overshoot */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);      /* fast-out, settles gracefully */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);     /* smooth deceleration */
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1); /* symmetric premium */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);       /* Material standard */
+
+  --transition-fast: 0.18s var(--ease-out-quart);
+  --transition-normal: 0.3s var(--ease-out-expo);
+  --transition-slow: 0.5s var(--ease-out-expo);
   --sidebar-width: 280px;
   --details-width: 420px;
+}
+
+/* ====== GLOBAL KEYFRAMES ====== */
+
+/* Task slides in from top with fade */
+@keyframes task-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Task shrinks and fades out on delete/complete */
+@keyframes task-exit {
+  0%   { opacity: 1; transform: scale(1); max-height: 120px; margin-bottom: 8px; }
+  30%  { opacity: 0.6; transform: scale(0.97); }
+  100% { opacity: 0; transform: scale(0.93); max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
+}
+
+/* Details panel fields stagger in */
+@keyframes field-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Ripple burst */
+@keyframes ripple-expand {
+  from {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Checkbox checkmark draw */
+@keyframes checkmark-draw {
+  from { stroke-dashoffset: 20; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* Modal enter */
+@keyframes modal-enter {
+  from {
+    transform: scale(0.94) translateY(-16px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Resets */
@@ -121,7 +193,16 @@ button {
   background: none;
   font-family: inherit;
   color: inherit;
-  transition: all var(--transition-fast);
+  transition:
+    background-color 0.18s var(--ease-out-quart),
+    color 0.18s var(--ease-out-quart),
+    border-color 0.18s var(--ease-out-quart),
+    transform 0.14s var(--ease-spring),
+    box-shadow 0.18s var(--ease-out-quart);
+}
+
+button:active {
+  transform: scale(0.94);
 }
 
 .icon-btn {
@@ -133,12 +214,19 @@ button {
   border-radius: var(--radius-md);
   color: var(--text-secondary);
   border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
 }
 
 .icon-btn:hover {
   background-color: var(--hover-color);
   color: var(--text-primary);
   border-color: var(--border-color);
+  transform: scale(1.06);
+}
+
+.icon-btn:active {
+  transform: scale(0.92);
 }
 
 .icon-btn svg {
@@ -155,7 +243,27 @@ button {
   font-size: 14px;
   font-weight: 500;
   border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
+  transition:
+    background-color 0.18s var(--ease-out-quart),
+    box-shadow 0.18s var(--ease-out-quart),
+    transform 0.14s var(--ease-spring),
+    border-color 0.18s var(--ease-out-quart);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+/* Ripple effect container (injected via JS) */
+.btn .ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+  animation: ripple-expand 0.55s var(--ease-out-expo) forwards;
+  transform-origin: center;
 }
 
 .btn-sm {
@@ -281,22 +389,34 @@ html[data-theme="light"] .moon-icon { display: block; }
   color: var(--text-secondary);
   border-radius: var(--radius-md);
   text-align: left;
+  transition:
+    background-color 0.18s var(--ease-out-quart),
+    color 0.18s var(--ease-out-quart),
+    transform 0.15s var(--ease-spring);
 }
 
 .nav-filter-btn:hover {
   background-color: var(--hover-color);
   color: var(--text-primary);
+  transform: translateX(2px);
 }
 
 .nav-filter-btn.active {
   background-color: var(--active-color);
   color: var(--text-primary);
+  transform: translateX(2px);
 }
 
 .nav-filter-btn svg {
   width: 18px;
   height: 18px;
   opacity: 0.8;
+  transition: opacity 0.18s var(--ease-out-quart);
+}
+
+.nav-filter-btn:hover svg,
+.nav-filter-btn.active svg {
+  opacity: 1;
 }
 
 .count-badge {
@@ -585,7 +705,29 @@ html[data-theme="light"] .moon-icon { display: block; }
   background-color: var(--success);
   width: 0%;
   border-radius: 3px;
-  transition: width 0.4s ease;
+  /* Smooth 500ms progress bar update */
+  transition: width 0.5s var(--ease-out-quart);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer glow on the progress bar */
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  border-radius: 3px;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0%   { transform: translateX(-40px); opacity: 0; }
+  40%  { opacity: 1; }
+  100% { transform: translateX(40px); opacity: 0; }
 }
 
 .progress-percent {
@@ -700,29 +842,63 @@ html[data-theme="light"] .moon-icon { display: block; }
   padding: 12px 16px;
   gap: 14px;
   box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow var(--transition-fast), border-color var(--transition-fast);
+  /* Animate lift + shadow + border in one declaration */
+  transition:
+    transform 0.22s var(--ease-out-quart),
+    box-shadow 0.22s var(--ease-out-quart),
+    border-color 0.18s var(--ease-out-quart),
+    opacity 0.22s var(--ease-out-quart),
+    background-color 0.2s var(--ease-standard);
   cursor: grab;
   position: relative;
+  /* Entering items slide in */
+  animation: task-enter 0.35s var(--ease-out-expo) both;
+  will-change: transform, opacity;
 }
 
 .task-item:active {
   cursor: grabbing;
 }
 
+/* Hover: lift 4px + deepen shadow */
 .task-item:hover {
+  transform: translateY(-4px);
   border-color: var(--text-muted);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 28px -6px rgba(0, 0, 0, 0.18), 0 4px 8px -2px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+.task-item:active:not(.dragging) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.12);
 }
 
 .task-item.active {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary-light);
+  box-shadow: 0 0 0 2px var(--primary-light), 0 8px 20px -6px rgba(0, 0, 0, 0.15);
 }
 
 .task-item.dragging {
   opacity: 0.4;
   transform: scale(0.98);
   border: 2px dashed var(--primary);
+  animation: none;
+}
+
+/* Completing: card briefly shrinks */
+.task-item.completing {
+  transform: scale(0.98);
+  opacity: 0.75;
+  transition:
+    transform 0.25s var(--ease-spring),
+    opacity 0.25s var(--ease-out-quart);
+}
+
+/* Deleting: shrink and fade away */
+.task-item.removing {
+  animation: task-exit 0.38s var(--ease-in-out-quart) forwards;
+  pointer-events: none;
+  overflow: hidden;
 }
 
 /* Custom animated checkbox */
@@ -752,37 +928,60 @@ html[data-theme="light"] .moon-icon { display: block; }
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-fast);
+  transition:
+    background-color 0.22s var(--ease-out-quart),
+    border-color 0.22s var(--ease-out-quart),
+    transform 0.2s var(--ease-spring),
+    box-shadow 0.2s var(--ease-out-quart);
+  position: relative;
+  overflow: hidden;
 }
 
 .checkbox-container:hover input ~ .checkmark {
-  border-color: var(--primary);
-  background-color: var(--primary-light);
+  border-color: var(--success);
+  background-color: rgba(16, 185, 129, 0.1);
+  transform: scale(1.08);
 }
 
-.checkmark::after {
-  content: "";
-  display: none;
-  width: 6px;
-  height: 10px;
-  border: solid #ffffff;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg) translate(-1px, -1px);
+/* SVG checkmark approach — drawn via stroke-dashoffset */
+.checkmark svg {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  opacity: 0;
+  transition: opacity 0.15s var(--ease-out-quart);
+  stroke: #ffffff;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.checkmark svg polyline {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  transition: stroke-dashoffset 0.25s var(--ease-out-expo) 0.05s;
 }
 
 .checkbox-container input:checked ~ .checkmark {
   background-color: var(--success);
   border-color: var(--success);
-  animation: checkbox-bounce 0.3s ease;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+  animation: checkbox-pop 0.35s var(--ease-spring);
 }
 
-.checkbox-container input:checked ~ .checkmark::after {
-  display: block;
+.checkbox-container input:checked ~ .checkmark svg {
+  opacity: 1;
 }
 
-@keyframes checkbox-bounce {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
+.checkbox-container input:checked ~ .checkmark svg polyline {
+  stroke-dashoffset: 0;
+}
+
+@keyframes checkbox-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.28); }
+  70%  { transform: scale(0.92); }
   100% { transform: scale(1); }
 }
 
@@ -814,12 +1013,31 @@ html[data-theme="light"] .moon-icon { display: block; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: color 0.2s ease, text-decoration 0.2s ease;
+  transition: color 0.25s var(--ease-out-quart);
+  position: relative;
+}
+
+/* Strikethrough line draws left-to-right via clip-path */
+.task-item-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 1.5px;
+  background-color: var(--text-muted);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.3s var(--ease-out-expo);
 }
 
 .task-item.completed .task-item-title {
   color: var(--text-muted);
-  text-decoration: line-through;
+  text-decoration: none; /* Use ::after pseudo for the drawn line */
+}
+
+.task-item.completed .task-item-title::after {
+  transform: scaleX(1);
 }
 
 .task-meta-row {
@@ -952,16 +1170,37 @@ html[data-theme="light"] .moon-icon { display: block; }
   flex-shrink: 0;
   height: 100%;
   z-index: 10;
-  transition: transform var(--transition-normal), opacity var(--transition-normal), width var(--transition-normal);
+  /* Smooth slide-in with premium easing */
+  transition:
+    transform 0.38s var(--ease-out-expo),
+    opacity 0.32s var(--ease-out-quart),
+    width 0.38s var(--ease-out-expo);
+  transform: translateX(0);
+  will-change: transform, opacity;
 }
 
-/* Hidden drawer state using transforms and negative margins */
+/* Hidden drawer state */
 .details-panel.hidden {
   width: 0 !important;
   transform: translateX(100%);
   opacity: 0;
+  pointer-events: none;
   border-left-width: 0;
 }
+
+/* Staggered animation for each form field when panel opens */
+.details-form .form-group,
+.details-form .form-row {
+  animation: field-enter 0.3s var(--ease-out-expo) both;
+}
+
+.details-form .form-group:nth-child(1), .details-form .form-row:nth-child(1) { animation-delay: 0.04s; }
+.details-form .form-group:nth-child(2), .details-form .form-row:nth-child(2) { animation-delay: 0.08s; }
+.details-form .form-group:nth-child(3), .details-form .form-row:nth-child(3) { animation-delay: 0.12s; }
+.details-form .form-group:nth-child(4), .details-form .form-row:nth-child(4) { animation-delay: 0.16s; }
+.details-form .form-group:nth-child(5), .details-form .form-row:nth-child(5) { animation-delay: 0.20s; }
+.details-form .form-group:nth-child(6), .details-form .form-row:nth-child(6) { animation-delay: 0.24s; }
+.details-form .form-group:nth-child(7), .details-form .form-row:nth-child(7) { animation-delay: 0.28s; }
 
 .details-header {
   display: flex;
@@ -1186,17 +1425,29 @@ html[data-theme="light"] .moon-icon { display: block; }
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
+  background-color: rgba(0, 0, 0, 0);
+  backdrop-filter: blur(0px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding-top: 12vh;
   z-index: 1000;
-  opacity: 1;
-  transition: opacity 0.25s ease;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.28s var(--ease-out-quart),
+    background-color 0.28s var(--ease-out-quart),
+    backdrop-filter 0.28s var(--ease-out-quart);
 }
 
+.modal-backdrop.visible {
+  opacity: 1;
+  pointer-events: all;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+}
+
+/* Keep display:none for truly hidden state */
 .modal-backdrop.hidden {
   display: none !important;
 }
@@ -1212,18 +1463,8 @@ html[data-theme="light"] .moon-icon { display: block; }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: modal-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes modal-enter {
-  from {
-    transform: scale(0.96) translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-  }
+  animation: modal-enter 0.38s var(--ease-out-expo) both;
+  will-change: transform, opacity;
 }
 
 .search-input-header {
@@ -1312,7 +1553,8 @@ html[data-theme="light"] .moon-icon { display: block; }
   flex-direction: column;
   overflow: hidden;
   padding: 24px;
-  animation: modal-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: modal-enter 0.38s var(--ease-out-expo) both;
+  will-change: transform, opacity;
 }
 
 .modal-header {

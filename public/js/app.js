@@ -95,6 +95,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Setup Event Listeners
   setupEventListeners();
+  // Attach ripple effect to all interactive buttons
+  setupRippleEffects();
 
   // Load Initial Data
   await refreshData();
@@ -102,6 +104,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Background loop for reminders checking (every 15 seconds)
   setInterval(checkReminders, 15000);
 });
+
+// Ripple effect: creates a circular burst from the click point
+function setupRippleEffects() {
+  // Observe dynamically added buttons via event delegation on body
+  document.body.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn, .icon-btn');
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 1.5;
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top  - size / 2;
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple';
+    ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;`;
+    btn.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove());
+  });
+}
 
 // Setup DOM Event Handlers
 function setupEventListeners() {
@@ -191,17 +211,29 @@ function setupEventListeners() {
 
   // Search Modal Toggles
   dom.searchTriggerBtn.addEventListener('click', toggleSearch);
-  dom.closeSearchBtn.addEventListener('click', () => dom.searchModal.classList.add('hidden'));
+  dom.closeSearchBtn.addEventListener('click', () => {
+    dom.searchModal.classList.remove('visible');
+    setTimeout(() => dom.searchModal.classList.add('hidden'), 280);
+  });
   dom.globalSearchInput.addEventListener('input', debounce(executeSearch, 300));
   dom.searchModal.addEventListener('click', (e) => {
-    if (e.target === dom.searchModal) dom.searchModal.classList.add('hidden');
+    if (e.target === dom.searchModal) {
+      dom.searchModal.classList.remove('visible');
+      setTimeout(() => dom.searchModal.classList.add('hidden'), 280);
+    }
   });
 
   // Help Shortcuts Modal
   dom.helpBtn.addEventListener('click', toggleShortcuts);
-  dom.closeShortcutsBtn.addEventListener('click', () => dom.shortcutsModal.classList.add('hidden'));
+  dom.closeShortcutsBtn.addEventListener('click', () => {
+    dom.shortcutsModal.classList.remove('visible');
+    setTimeout(() => dom.shortcutsModal.classList.add('hidden'), 280);
+  });
   dom.shortcutsModal.addEventListener('click', (e) => {
-    if (e.target === dom.shortcutsModal) dom.shortcutsModal.classList.add('hidden');
+    if (e.target === dom.shortcutsModal) {
+      dom.shortcutsModal.classList.remove('visible');
+      setTimeout(() => dom.shortcutsModal.classList.add('hidden'), 280);
+    }
   });
 
   // Details Panel Closing
@@ -431,14 +463,14 @@ async function refreshTaskList() {
 
     if (overdueTasks.length > 0) {
       dom.taskList.insertAdjacentHTML('beforeend', '<div class="task-group-header">Overdue</div>');
-      overdueTasks.forEach(task => renderTaskItem(task));
+      overdueTasks.forEach((task, i) => renderTaskItem(task, i));
     }
 
     if (regularTasks.length > 0 && overdueTasks.length > 0) {
       dom.taskList.insertAdjacentHTML('beforeend', '<div class="task-group-header">Tasks</div>');
     }
 
-    regularTasks.forEach(task => renderTaskItem(task));
+    regularTasks.forEach((task, i) => renderTaskItem(task, overdueTasks.length + i));
 
     // Rebind drag & drop events
     setupDragAndDrop();
@@ -449,7 +481,7 @@ async function refreshTaskList() {
 }
 
 // Render a single task card in DOM
-function renderTaskItem(task) {
+function renderTaskItem(task, index = 0) {
   const isCompleted = task.status === 'completed';
   const checkedAttr = isCompleted ? 'checked' : '';
   const completedClass = isCompleted ? 'completed' : '';
@@ -510,12 +542,18 @@ function renderTaskItem(task) {
   li.className = `task-item ${completedClass} ${activeClass}`;
   li.draggable = true;
   li.dataset.id = task.id;
+  // Stagger entrance animation — each card arrives slightly after the previous
+  li.style.animationDelay = `${Math.min(index * 0.045, 0.4)}s`;
   li.innerHTML = `
     <div class="task-priority-indicator ${priorityClass}"></div>
     
     <label class="checkbox-container" aria-label="Complete task">
       <input type="checkbox" ${checkedAttr}>
-      <span class="checkmark"></span>
+      <span class="checkmark">
+        <svg viewBox="0 0 12 10" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="1.5,5 4.5,8.5 10.5,1.5"/>
+        </svg>
+      </span>
     </label>
     
     <div class="task-content">
@@ -549,8 +587,10 @@ function renderTaskItem(task) {
     e.stopPropagation();
     const status = checkbox.checked ? 'completed' : 'pending';
     
-    // Add quick strikeout class for instantaneous feedback
+    // Animate the card on complete/uncomplete
     if (checkbox.checked) {
+      li.classList.add('completing');
+      setTimeout(() => li.classList.remove('completing'), 300);
       li.classList.add('completed');
     } else {
       li.classList.remove('completed');
@@ -558,16 +598,13 @@ function renderTaskItem(task) {
 
     try {
       const updated = await api.updateTask(task.id, { status });
-      // If we checked it and it was recurring, the active task might have changed (e.g. its date advanced)
       if (task.recurring && task.recurring !== 'none') {
         await refreshData();
-        // Keep active detail selection on the pending task (which has the advanced date)
         if (state.selectedTask && state.selectedTask.id === task.id) {
           selectTask(updated);
         }
       } else {
         await refreshData();
-        // Update selection if details panel matches
         if (state.selectedTask && state.selectedTask.id === task.id) {
           state.selectedTask = updated;
           selectTask(updated);
@@ -583,7 +620,6 @@ function renderTaskItem(task) {
 
   // Task Card Click (to open details panel)
   li.addEventListener('click', (e) => {
-    // Prevent opening detail view when checking checkboxes or dragging
     if (e.target.closest('.checkbox-container') || e.target.closest('.drag-handle')) return;
     
     document.querySelectorAll('.task-item').forEach(el => el.classList.remove('active'));
@@ -601,8 +637,12 @@ function selectTask(task) {
   
   // Hide empty state and show form
   dom.detailsEmptyState.classList.add('hidden');
-  dom.detailsForm.classList.remove('hidden');
   dom.detailsPanel.classList.remove('hidden');
+
+  // Re-trigger staggered field entrance animation on each new task selection
+  dom.detailsForm.classList.add('hidden');
+  void dom.detailsForm.offsetWidth; // force reflow to reset animations
+  dom.detailsForm.classList.remove('hidden');
 
   // Fill in active fields
   dom.detailTitle.value = task.title;
@@ -623,6 +663,7 @@ function selectTask(task) {
   // Render Tags
   renderTaskTags();
 }
+
 
 // Renders tag pills inside Details Panel
 function renderTaskTags() {
@@ -683,10 +724,17 @@ async function saveActiveTaskField(field, value) {
   }
 }
 
-// Delete Active Task
+// Delete Active Task — animates the card out before removal
 async function deleteActiveTask() {
   if (!state.selectedTask) return;
   if (!confirm('Are you sure you want to delete this task?')) return;
+
+  // Animate out the card first
+  const taskCard = document.querySelector(`.task-item[data-id="${state.selectedTask.id}"]`);
+  if (taskCard) {
+    taskCard.classList.add('removing');
+    await new Promise(resolve => setTimeout(resolve, 360));
+  }
 
   try {
     await api.deleteTask(state.selectedTask.id);
@@ -738,21 +786,42 @@ function toggleSidebar() {
 }
 
 function toggleSearch() {
-  dom.searchModal.classList.toggle('hidden');
-  if (!dom.searchModal.classList.contains('hidden')) {
+  const isHidden = dom.searchModal.classList.contains('hidden');
+  if (isHidden) {
+    dom.searchModal.classList.remove('hidden');
+    // Allow display:block to apply before starting opacity transition
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => dom.searchModal.classList.add('visible'));
+    });
     dom.globalSearchInput.value = '';
     dom.searchResultsList.innerHTML = '<div class="search-empty-state"><p>Search tasks, notes, or priorities instantly</p></div>';
     setTimeout(() => dom.globalSearchInput.focus(), 50);
+  } else {
+    dom.searchModal.classList.remove('visible');
+    setTimeout(() => dom.searchModal.classList.add('hidden'), 280);
   }
 }
 
 function toggleShortcuts() {
-  dom.shortcutsModal.classList.toggle('hidden');
+  const isHidden = dom.shortcutsModal.classList.contains('hidden');
+  if (isHidden) {
+    dom.shortcutsModal.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => dom.shortcutsModal.classList.add('visible'));
+    });
+  } else {
+    dom.shortcutsModal.classList.remove('visible');
+    setTimeout(() => dom.shortcutsModal.classList.add('hidden'), 280);
+  }
 }
 
 function closeAllOverlays() {
-  dom.searchModal.classList.add('hidden');
-  dom.shortcutsModal.classList.add('hidden');
+  [dom.searchModal, dom.shortcutsModal].forEach(modal => {
+    if (!modal.classList.contains('hidden')) {
+      modal.classList.remove('visible');
+      setTimeout(() => modal.classList.add('hidden'), 280);
+    }
+  });
   dom.sidebar.classList.remove('active');
   closeDetailsPanel();
 }
